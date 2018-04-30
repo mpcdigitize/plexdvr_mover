@@ -10,7 +10,6 @@ from timeparser import TimeParser
 from time import strptime
 import shutil
 import time
-from mediamover import MediaMover
 
 HOURS_TO_SUBTRACT = 24
 #500MB
@@ -19,7 +18,7 @@ MIN_FILE_SIZE = 500000000
 MAX_FILE_SIZE = 2500000000
 FILE_IS_OLDER_THEN = datetime.datetime.now() - datetime.timedelta(hours=HOURS_TO_SUBTRACT)
 
-mover = MediaMover()
+remove_files = []
 service = Service()
  
 #print FILE_IS_OLDER_THEN
