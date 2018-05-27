@@ -83,7 +83,7 @@ class Service:
 
     def move_converted_files(self):
         x = 0
-        for file in self.selected:
+        for path in self.selected:
             x = x + 1
             if os.path.exists(path):
               print "Moving " ,x , " of " , len(self.selected) , " - " , file.path
