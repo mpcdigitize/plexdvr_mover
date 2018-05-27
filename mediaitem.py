@@ -1,9 +1,7 @@
 #!/usr/bin/python
-import glob
-import os
 
 class MediaItem(object):
-  
+
   def __init__(self):
       self.name = ""
       self.full_name = ""
@@ -17,6 +15,4 @@ class MediaItem(object):
       self.target_folder = ""
       self.target_name = ""
       self.target_remove_file = ""
-  
-  
-  
+
