@@ -1,23 +1,16 @@
 #!/usr/bin/python
 import os
-import datetime
 import shutil
 from mediaparser import MediaParser
 from repository import Repository
 from directorysearcher import DirectorySearcher
-from timeparser import TimeParser
 from size import Size
+from sequence import Sequencer 
+from settings import MAX_DATETIME
+from settings import MIN_FILE_SIZE
+from settings import MAX_FILE_SIZE
+from settings import CONVERTED_EXTENSION
 
-#recording should be older than ...hours from now
-HOURS_TO_SUBTRACT = 0
-#set minimum converted file size in kilobytes
-MIN_FILE_SIZE = 500000000 #500 MB
-#set maximum converted file size in kilobytes
-MAX_FILE_SIZE = 100000000000 #10 GB
-
-#do not change this section
-MAX_DATETIME = datetime.datetime.now() - datetime.timedelta(hours=HOURS_TO_SUBTRACT)
-CONVERTED_EXTENSION = ".mp4"
 
 class Service:
 
@@ -34,32 +27,55 @@ class Service:
             result.append(media_item)
         return result
 
-    def _match_media_items(self,extensions,folders):
-        repository = Repository()
-        directory = DirectorySearcher()
-        timeparser = TimeParser()
-        recordings = repository.get_recordings(extensions,folders)
-        converted = repository.get_converted(CONVERTED_EXTENSION,folders)
-        media_item_recordings = self._parse_info_from_path(recordings)
-        media_item_converted = self._parse_info_from_path(converted)
-        for recording in media_item_recordings:
-            for converted in media_item_converted:
-                if converted.name in recording.name and converted.target_folder == recording.target_folder:
-                    converted.target_name = recording.name + converted.extension
+    def _match_media_items(self,_recordings_,_converted_):  
+        for recording in _recordings_:
+            for converted in _converted_:
+                if converted.sequence == recording.sequence:
+                    converted.target_name = recording.file_name + converted.extension
                     converted.target_remove_file = recording.path
-                    converted.datetime = timeparser.parse_timestamp(converted.timestamp)
-                    self.matched.append(converted)
+                    self.selected.append(converted)
+                    self.remove_files.append(recording.path)
 
-    def _select_files(self):
-        for item in self.matched:
-            if item.size > MIN_FILE_SIZE and item.size < MAX_FILE_SIZE:
+    def _get_recordings(self,extensions,folders):
+        repository = Repository()
+        repo_recordings = repository.get_recordings(extensions,folders)
+        return repo_recordings
+
+    def _get_converted(self,extensions,folders):
+        repository = Repository()
+        repo_converted = repository.get_converted(CONVERTED_EXTENSION,folders)
+        return repo_converted
+    
+    def _parse_metadata(self,files):
+        parsed_metadata = self._parse_info_from_path(files)
+        return parsed_metadata
+        
+    
+    def _select_files(self,_files):
+        selected_result = []
+        for item in _files:
+            if item.file_size > MIN_FILE_SIZE and item.file_size < MAX_FILE_SIZE:
                 if item.datetime < MAX_DATETIME:
-                    self.selected.append(item)
-                    self.remove_files.append(item.target_remove_file)
+                    selected_result.append(item)
+        return selected_result
+        
+    def _get_sequence(self,files_):
+        sequencer = Sequencer()
+        _files_with_sequence = sequencer.get_sequence(files_)
+        return _files_with_sequence
+		
 
     def get_files(self,extensions,folders):
-        self._match_media_items(extensions,folders)
-        self._select_files()
+        files_recorded = self._get_recordings(extensions,folders)
+        files_converted = self._get_converted(CONVERTED_EXTENSION,folders)
+        metadata_recorded = self._parse_metadata(files_recorded)
+        metadata_converted = self._parse_metadata(files_converted)
+        selected_recorded = self._select_files(metadata_recorded)
+        selected_converted = self._select_files(metadata_converted)
+        sequence_recorded = self._get_sequence(selected_recorded)
+        sequence_converted = self._get_sequence(selected_converted) 
+        self._match_media_items(sequence_recorded,sequence_converted)
+        
 
     def preview(self):
         size = Size()
@@ -71,7 +87,8 @@ class Service:
             print "Converted: ",item.path
             print "Target: ",item.target_folder + os.sep + item.target_name
             print "DateTime: ",item.timestamp
-            print "Size: ", size.convert_size(item.size)
+            print "Size: ", size.convert_size(item.file_size)
+        print "Total files: " , len(self.selected) , " to move"
         print "------------------------"
         print "REMOVING:"
         print "------------------------"
@@ -79,18 +96,22 @@ class Service:
         for item in self.remove_files:
             print "Recording: ",item
 
-        print "Total files: " , len(self.selected) , " to move"
+        print "Total files: " , len(self.remove_files) , " to delete"
+        print "------------------------"
+        print "------------------------"
 
     def move_converted_files(self):
         x = 0
-        for path in self.selected:
+        for file in self.selected:
             x = x + 1
-            if os.path.exists(path):
+            if os.path.exists(file.path):
               print "Moving " ,x , " of " , len(self.selected) , " - " , file.path
               shutil.move(file.path,file.target_folder + os.sep + file.target_name)
             else:
               print "Error! "  ,x , " of " , len(self.selected) , " - " , file.path
-
+        print "------------------------"
+        print "------------------------"
+        
     def remove_recorded_files(self):
         x = 0
         for path in self.remove_files:
@@ -100,6 +121,8 @@ class Service:
               os.remove(path)
               print "Success! Deleted: ",path
             else:
-              print "Error! " ,x , " of " , len(self.remove_files), " " , path 
+              print "Error! " ,x , " of " , len(self.remove_files), " " , path
+        print "------------------------"
+        print "------------------------"
 
 

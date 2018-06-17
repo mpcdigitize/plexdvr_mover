@@ -3,11 +3,11 @@
 class MediaItem(object):
 
   def __init__(self):
-      self.name = ""
+      self.file_name = ""
       self.full_name = ""
       self.path = ""
       self.extension = ""
-      self.size = ""
+      self.file_size = ""
       self.timestamp = ""
       self.datetime = ""
       self.parent_directory = ""
@@ -15,4 +15,6 @@ class MediaItem(object):
       self.target_folder = ""
       self.target_name = ""
       self.target_remove_file = ""
+      self.sequence = ""
+      self.sequence_pattern = ""
 

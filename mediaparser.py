@@ -2,6 +2,8 @@
 import os
 import time
 from mediaitem import MediaItem
+from timeparser import TimeParser
+from sequence import Sequencer
 
   
         
@@ -59,15 +61,19 @@ class MediaParser:
   def parse_media_item(self,path):
 
     media_item = MediaItem()
+    timeparser = TimeParser()
+    sequencer = Sequencer()
 
     media_item.path = path
-    media_item.name = os.path.basename(os.path.splitext(path)[0])
-    media_item.size = os.path.getsize(path)
+    media_item.file_name = os.path.basename(os.path.splitext(path)[0])
+    media_item.file_size = os.path.getsize(path)
     media_item.full_name = os.path.basename(path)
     media_item.extension = os.path.splitext(path)[1]
     media_item.timestamp = time.ctime(os.path.getmtime(path))
     media_item.date_modified = time.ctime(os.path.getmtime(path))
     media_item.target_folder = self._get_target_folder_name_from_path(path)
+    media_item.datetime = timeparser.parse_timestamp(time.ctime(os.path.getmtime(path)))
+    media_item.sequence_pattern = self._get_target_folder_name_from_path(path) + "_" + sequencer.get_sequence_id_from_string(os.path.basename(os.path.splitext(path)[0]))
 
 
 
