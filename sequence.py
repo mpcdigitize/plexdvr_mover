@@ -12,7 +12,7 @@ class Sequencer(object):
 				   "target_remove_file","sequence_pattern"])
     
     files.sort(key=lambda r: r.file_name)
-    files.sort(key=lambda r: r.datetime)
+    files.sort(key=lambda r: r.file_size)
     x = 0
     for f in files:
         x = x + 1
